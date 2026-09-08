@@ -130,7 +130,16 @@ Current behavior:
 - `looper upgrade --daemon` installs or upgrades the managed daemon binary
 - Homebrew and dev / `go install` installs refuse CLI self-upgrade and print the matching manual command instead
 - after a daemon upgrade, restart manually with `looper daemon restart`
-- manifest-gated upgrade, rollback, and channel switching are not implemented yet
+- each GitHub release also publishes `manifest.json` to Cloudflare R2 at `https://releases.looper.powerformer.com/`
+- `looper upgrade --check` reads latest versions from that CDN first (`/channels/stable.json`), then falls back to GitHub Releases metadata
+- manifest-gated rollback and channel switching are not implemented yet
+
+CDN object layout:
+
+- `https://releases.looper.powerformer.com/manifest.json` — latest stable pointer
+- `https://releases.looper.powerformer.com/channels/stable.json` — same stable pointer
+- `https://releases.looper.powerformer.com/channels/beta.json` — latest beta pointer
+- `https://releases.looper.powerformer.com/<tag>/manifest.json` — immutable per-release copy
 
 ## Compatibility and version policy
 
@@ -138,7 +147,6 @@ Current behavior:
 - short-lived version skew is allowed while the HTTP API remains compatible
 - management endpoints stay under `/api/v1/*`
 - if the daemon is running, the CLI reads its current version from `/api/v1/status`; otherwise it falls back to `looperd --version`
-- `looper upgrade --check` reads the latest CLI and daemon versions from GitHub Releases metadata
 - release builds are tag-driven (`vX.Y.Z` / `vX.Y.Z-rc.N`); local default builds use `0.0.0-dev`
 
 ## Uninstall

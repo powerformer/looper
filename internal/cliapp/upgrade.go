@@ -1292,7 +1292,6 @@ func (r *commandRuntime) upgradeCLIWithOutput(cmd *cobra.Command, emitOutput boo
 		}
 		return result, &cliUpgradeRefusedError{message: guidance}
 	}
-
 	latestRelease, err := r.fetchReleaseMetadata(ctx, "")
 	if err != nil {
 		return cliUpgradeOutput{}, err
@@ -1337,7 +1336,18 @@ func (r *commandRuntime) upgradeCLIWithOutput(cmd *cobra.Command, emitOutput boo
 	if err != nil {
 		return cliUpgradeOutput{}, err
 	}
-	asset, err := findReleaseAssetSet(latestRelease, "looper-"+target)
+	binaryName := "looper-" + target
+	asset, err := findReleaseAssetSet(latestRelease, binaryName)
+	if err != nil {
+		latestRelease, err = r.fetchReleaseMetadataMatching(ctx, latestRelease.TagName, func(payload githubReleasePayload) error {
+			_, findErr := findReleaseAssetSet(payload, binaryName)
+			return findErr
+		})
+		if err != nil {
+			return cliUpgradeOutput{}, fmt.Errorf("looper release: %w", err)
+		}
+		asset, err = findReleaseAssetSet(latestRelease, binaryName)
+	}
 	if err != nil {
 		return cliUpgradeOutput{}, fmt.Errorf("looper release: %w", err)
 	}
