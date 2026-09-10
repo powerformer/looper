@@ -604,6 +604,13 @@ func diagnoseLoop(loop storage.LoopRecord, run *storage.RunRecord, queue *storag
 		} else {
 			diagnosis.RecommendedAction = release
 		}
+		if loops.IsReviewFixBudgetHold(loop) {
+			retryable := true
+			diagnosis.FailureClass = "review_fix_budget"
+			diagnosis.Retryable = &retryable
+			diagnosis.Source = "loop"
+			diagnosis.Message = "review-fix budget exhausted"
+		}
 	}
 	// Expand <seq> before emitting JSON/human output so operators and scripts
 	// never see the literal placeholder outside writeHumanLoopInspect.

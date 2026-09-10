@@ -6706,6 +6706,11 @@ func TestProcessClaimedItemRestartsFromDiscoverAfterRemoteHeadChangeAtPush(t *te
 		t.Fatalf("len(agent.starts) after first run = %d, want 1", len(agent.starts))
 	}
 
+	afterFailure, err := fixture.repos.Loops.GetByID(context.Background(), first.LoopID)
+	if err != nil || afterFailure == nil || loops.FixerPushCount(afterFailure.MetadataJSON) != 0 || loops.IsReviewFixBudgetHold(*afterFailure) {
+		t.Fatalf("after failed push = (%#v, %v), want zero budget consumed and no budget hold", afterFailure, err)
+	}
+
 	fixture.advance(5 * time.Second)
 	claim2, err := fixture.repos.Queue.ClaimNextOfType(context.Background(), fixture.nowISO(), "fixer-worker-1", "fixer")
 	if err != nil || claim2 == nil {
@@ -6717,6 +6722,10 @@ func TestProcessClaimedItemRestartsFromDiscoverAfterRemoteHeadChangeAtPush(t *te
 	}
 	if second.Status != "success" {
 		t.Fatalf("second result = %#v, want success", second)
+	}
+	afterSuccess, err := fixture.repos.Loops.GetByID(context.Background(), second.LoopID)
+	if err != nil || afterSuccess == nil || loops.FixerPushCount(afterSuccess.MetadataJSON) != 1 {
+		t.Fatalf("after successful push = (%#v, %v), want exactly one budget unit consumed", afterSuccess, err)
 	}
 	if len(agent.starts) != 2 {
 		t.Fatalf("len(agent.starts) = %d, want 2 (restart from discover)", len(agent.starts))
